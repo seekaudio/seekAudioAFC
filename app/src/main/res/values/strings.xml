@@ -42,7 +42,7 @@
     <string name="pref_videocall_key">videocall_preference</string>
     <string name="pref_videocall_title">Video call.</string>
     <string name="pref_videocall_dlg">Enable video in a call.</string>
-    <string name="pref_videocall_default">true</string>
+    <string name="pref_videocall_default">false</string>
 
     <string name="pref_screencapture_key">screencapture_preference</string>
     <string name="pref_screencapture_title">Use screencapture.</string>
@@ -50,7 +50,7 @@
 
     <string name="pref_camera2_key">camera2_preference</string>
     <string name="pref_camera2_title">Use Camera2.</string>
-    <string name="pref_camera2_default">true</string>
+    <string name="pref_camera2_default">false</string>
     <string name="pref_camera2_not_supported">Not supported on this device.</string>
 
     <string name="pref_resolution_key">resolution_preference</string>
@@ -86,12 +86,12 @@
     <string name="pref_hwcodec_key">hwcodec_preference</string>
     <string name="pref_hwcodec_title">Video codec hardware acceleration.</string>
     <string name="pref_hwcodec_dlg">Use hardware accelerated video codec (if available).</string>
-    <string name="pref_hwcodec_default">true</string>
+    <string name="pref_hwcodec_default">false</string>
 
     <string name="pref_capturetotexture_key">capturetotexture_preference</string>
     <string name="pref_capturetotexture_title">Video capture to surface texture.</string>
     <string name="pref_capturetotexture_dlg">Capture video to textures (if available).</string>
-    <string name="pref_capturetotexture_default">true</string>
+    <string name="pref_capturetotexture_default">false</string>
 
     <string name="pref_flexfec_key">flexfec_preference</string>
     <string name="pref_flexfec_title">Codec-agnostic Flexible FEC.</string>

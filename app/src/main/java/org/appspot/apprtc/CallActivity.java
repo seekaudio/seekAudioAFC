@@ -161,10 +161,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   @Nullable
   private SignalingParameters signalingParameters;
   @Nullable private AppRTCAudioManager audioManager;
-  @Nullable
-  private SurfaceViewRenderer pipRenderer;
-  @Nullable
-  private SurfaceViewRenderer fullscreenRenderer;
+  //@Nullable
+  //private SurfaceViewRenderer pipRenderer;
+  //@Nullable
+  //private SurfaceViewRenderer fullscreenRenderer;
   @Nullable
   private VideoFileRenderer videoFileRenderer;
   private final List<VideoSink> remoteSinks = new ArrayList<>();
@@ -187,8 +187,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
   // Controls
   private CallFragment callFragment;
-  private HudFragment hudFragment;
-  private CpuMonitor cpuMonitor;
+  //private HudFragment hudFragment;
+  //private CpuMonitor cpuMonitor;
 
   @Override
   // TODO(bugs.webrtc.org/8580): LayoutParams.FLAG_TURN_SCREEN_ON and
@@ -211,10 +211,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     signalingParameters = null;
 
     // Create UI controls.
-    pipRenderer = findViewById(R.id.pip_video_view);
-    fullscreenRenderer = findViewById(R.id.fullscreen_video_view);
+    //pipRenderer = findViewById(R.id.pip_video_view);
+    //fullscreenRenderer = findViewById(R.id.fullscreen_video_view);
     callFragment = new CallFragment();
-    hudFragment = new HudFragment();
+    //hudFragment = new HudFragment();
 
     // Show/hide call control fragment on view click.
     View.OnClickListener listener = new View.OnClickListener() {
@@ -225,22 +225,22 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     };
 
     // Swap feeds on pip view click.
-    pipRenderer.setOnClickListener(new View.OnClickListener() {
+/*    pipRenderer.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
         setSwappedFeeds(!isSwappedFeeds);
       }
-    });
+    });*/
 
-    fullscreenRenderer.setOnClickListener(listener);
+    //fullscreenRenderer.setOnClickListener(listener);
     remoteSinks.add(remoteProxyRenderer);
 
     final Intent intent = getIntent();
     final EglBase eglBase = EglBase.create();
 
     // Create video renderers.
-    pipRenderer.init(eglBase.getEglBaseContext(), null);
-    pipRenderer.setScalingType(ScalingType.SCALE_ASPECT_FIT);
+    //pipRenderer.init(eglBase.getEglBaseContext(), null);
+    //pipRenderer.setScalingType(ScalingType.SCALE_ASPECT_FIT);
     String saveRemoteVideoToFile = intent.getStringExtra(EXTRA_SAVE_REMOTE_VIDEO_TO_FILE);
 
     // When saveRemoteVideoToFile is set we save the video from the remote to a file.
@@ -256,12 +256,12 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             "Failed to open video file for output: " + saveRemoteVideoToFile, e);
       }
     }
-    fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
-    fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
+    //fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
+    //fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
 
-    pipRenderer.setZOrderMediaOverlay(true);
-    pipRenderer.setEnableHardwareScaler(true /* enabled */);
-    fullscreenRenderer.setEnableHardwareScaler(false /* enabled */);
+    //pipRenderer.setZOrderMediaOverlay(true);
+    //pipRenderer.setEnableHardwareScaler(true /* enabled */);
+    //fullscreenRenderer.setEnableHardwareScaler(false /* enabled */);
     // Start with local feed in fullscreen and swap it to the pip when the call is connected.
     setSwappedFeeds(true /* isSwappedFeeds */);
 
@@ -345,18 +345,18 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     roomConnectionParameters = new RoomConnectionParameters(roomId, loopback);
 
     // Create CPU monitor
-    if (CpuMonitor.isSupported()) {
-      cpuMonitor = new CpuMonitor(this);
-      hudFragment.setCpuMonitor(cpuMonitor);
-    }
+    //if (CpuMonitor.isSupported()) {
+    //  cpuMonitor = new CpuMonitor(this);
+    //  hudFragment.setCpuMonitor(cpuMonitor);
+    //}
 
     // Send intent arguments to fragments.
     callFragment.setArguments(intent.getExtras());
-    hudFragment.setArguments(intent.getExtras());
+    //hudFragment.setArguments(intent.getExtras());
     // Activate call and HUD fragments and start the call.
     FragmentTransaction ft = getFragmentManager().beginTransaction();
     ft.add(R.id.call_fragment_container, callFragment);
-    ft.add(R.id.hud_fragment_container, hudFragment);
+    //ft.add(R.id.hud_fragment_container, hudFragment);
     ft.commit();
 
     /*// For command line execution run connection for <runTimeMs> and exit.
@@ -512,9 +512,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (peerConnectionClient != null && !screencaptureEnabled) {
       peerConnectionClient.stopVideoSource();
     }
-    if (cpuMonitor != null) {
-      cpuMonitor.pause();
-    }
+    //if (cpuMonitor != null) {
+      //cpuMonitor.pause();
+    //}
   }
 
   @Override
@@ -525,9 +525,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (peerConnectionClient != null && !screencaptureEnabled) {
       peerConnectionClient.startVideoSource();
     }
-    if (cpuMonitor != null) {
-      cpuMonitor.resume();
-    }
+    //if (cpuMonitor != null) {
+    //  cpuMonitor.resume();
+    //}
   }
 
   @Override
@@ -556,7 +556,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
   @Override
   public void onVideoScalingSwitch(ScalingType scalingType) {
-    fullscreenRenderer.setScalingType(scalingType);
+    //fullscreenRenderer.setScalingType(scalingType);
   }
 
   @Override
@@ -581,7 +581,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       return;
     }
     // Show/hide call control fragment
-    callControlFragmentVisible = !callControlFragmentVisible;
+/*    callControlFragmentVisible = !callControlFragmentVisible;
     FragmentTransaction ft = getFragmentManager().beginTransaction();
     if (callControlFragmentVisible) {
       ft.show(callFragment);
@@ -591,7 +591,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       ft.hide(hudFragment);
     }
     ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-    ft.commit();
+    ft.commit();*/
   }
 
   private void startCall() {
@@ -729,10 +729,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private void setSwappedFeeds(boolean isSwappedFeeds) {
     Logging.d(TAG, "setSwappedFeeds: " + isSwappedFeeds);
     this.isSwappedFeeds = isSwappedFeeds;
-    localProxyVideoSink.setTarget(isSwappedFeeds ? fullscreenRenderer : pipRenderer);
-    remoteProxyRenderer.setTarget(isSwappedFeeds ? pipRenderer : fullscreenRenderer);
-    fullscreenRenderer.setMirror(isSwappedFeeds);
-    pipRenderer.setMirror(!isSwappedFeeds);
+    //localProxyVideoSink.setTarget(isSwappedFeeds ? fullscreenRenderer : pipRenderer);
+    //remoteProxyRenderer.setTarget(isSwappedFeeds ? pipRenderer : fullscreenRenderer);
+    //fullscreenRenderer.setMirror(isSwappedFeeds);
+    //pipRenderer.setMirror(!isSwappedFeeds);
   }
 
 /*  // -----Implementation of AppRTCClient.AppRTCSignalingEvents ---------------
@@ -863,12 +863,12 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
           ", 音频轨道数: " + stream.audioTracks.size());
     
     // 处理远程视频轨道
-    if (stream.videoTracks.size() > 0) {
+/*    if (stream.videoTracks.size() > 0) {
       Log.d(TAG, "[WebRTC]添加远程视频轨道到渲染器");
       stream.videoTracks.get(0).addSink(fullscreenRenderer);
     } else {
       Log.w(TAG, "[WebRTC]远程媒体流中没有视频轨道");
-    }
+    }*/
     
     // 处理远程音频轨道 - 音频会自动播放，不需要手动处理
     if (stream.audioTracks.size() > 0) {
@@ -984,7 +984,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       @Override
       public void run() {
         if (!isError && connected) {
-          hudFragment.updateEncoderStatistics(report);
+          //hudFragment.updateEncoderStatistics(report);
         }
       }
     });

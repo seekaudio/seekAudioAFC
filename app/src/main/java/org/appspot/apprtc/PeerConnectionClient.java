@@ -600,7 +600,7 @@ public class PeerConnectionClient {
     sdpMediaConstraints.mandatory.add(
         new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
     sdpMediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
-        "OfferToReceiveVideo", Boolean.toString(isVideoCallEnabled())));
+        "OfferToReceiveVideo", "false"));//Boolean.toString(isVideoCallEnabled())));
   }
 
   private void createPeerConnectionInternal() throws Exception {
@@ -824,7 +824,7 @@ public class PeerConnectionClient {
     //if (peerConnection == null) createPeerConnection();
     MediaConstraints constraints = new MediaConstraints();
     constraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
-    constraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
+    constraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
     constraints.optional.add(new MediaConstraints.KeyValuePair("googCpuOveruseDetection", "false"));
 
     assert peerConnection != null;
