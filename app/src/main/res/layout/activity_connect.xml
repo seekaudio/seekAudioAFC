@@ -22,16 +22,28 @@
         android:gravity="center"
         android:layout_marginBottom="8dp">
 
-        <!-- TODO(crbug.com/900912): Fix and remove lint ignore -->
+        <Button
+            android:id="@+id/caller_button"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:background="@drawable/button_raised_selector"
+            android:elevation="4dp"
+            android:text="我是呼叫方"
+            android:textColor="#8EC74B" />
+		
         <EditText
-            tools:ignore="LabelFor,Autofill"
             android:id="@+id/room_edittext"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+			android:minHeight="48dp"
             android:layout_weight="1"
-            android:maxLines="1"
+            android:hint="请输入对方ip地址"
             android:imeOptions="actionDone"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:maxLines="1"
+			android:textSize="10sp"
+            android:textColorHint="#999999"
+            tools:ignore="LabelFor,Autofill" />
 
 
         <ImageButton
@@ -40,16 +52,61 @@
             android:layout_height="48dp"
             android:contentDescription="@string/connect_description"
             android:background="@android:drawable/sym_action_call" />
-
-        <ImageButton
-            android:id="@+id/add_favorite_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:contentDescription="@string/add_favorite_description"
-            android:background="@android:drawable/ic_input_add" />
     </LinearLayout>
 
-    <TextView
+	<LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+		<Button
+            android:id="@+id/reciever_button"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:background="@drawable/button_raised_selector"
+            android:elevation="4dp"
+            android:text="我是接收方"
+            android:textColor="#8EC74B" />
+
+		<TextView
+            android:id="@+id/reciever_description_view"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+			android:textSize="10sp"
+            android:textColorHint="#999999"
+			android:text="点击左边按钮可以获取本机ip地址" />
+	</LinearLayout>
+
+	<LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+		<Button
+            android:id="@+id/self_button"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:background="@drawable/button_raised_selector"
+            android:elevation="4dp"
+            android:text="我呼叫自己"
+            android:textColor="#8EC74B" />
+		
+		<TextView
+		    android:id="@+id/self_description_view"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight="1"
+		    android:textColorHint="#999999"
+			android:textSize="10sp"
+		    android:text="这个是loopback功能" />	
+	</LinearLayout>
+	
+	<TextView
         android:id="@+id/room_listview_description"
         android:layout_width="match_parent"
         android:layout_height="48dp"

@@ -3,7 +3,7 @@
     <string name="app_name">AppRTC Mobile</string>
     <string name="settings_name">AppRTC Settings</string>
     <string name="disconnect_call">Disconnect Call</string>
-    <string name="room_description">请输入对方IP地址（如：192.168.1.100）</string>
+    <string name="room_description">请先选择你在通话中的角色</string>
     <string name="room_edittext_hint">IP地址</string>
     <string name="connect_text">连接</string>
     <string name="invalid_url_title">无效的IP地址</string>

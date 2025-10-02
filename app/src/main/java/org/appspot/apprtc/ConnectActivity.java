@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,6 +40,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 
 import java.net.Inet4Address;
@@ -66,8 +69,11 @@ public class ConnectActivity extends Activity {
   private static final int PERMISSION_REQUEST = 2;
   private static final int REMOVE_FAVORITE_INDEX = 0;
   private static boolean commandLineRun;
-
-  private ImageButton addFavoriteButton;
+  private Toast logToast;
+  private Button callerButton;
+  private Button receiverButton;
+  private TextView receiverView;
+  private TextView hintView;
   private EditText roomEditText;
   private EditText roomEditTextDescription;
   private Button connectButton;
@@ -118,24 +124,41 @@ public class ConnectActivity extends Activity {
       @Override
       public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
         if (i == EditorInfo.IME_ACTION_DONE) {
-          addFavoriteButton.performClick();
+          //addFavoriteButton.performClick();
           return true;
         }
         return false;
       }
     });
-    roomEditText.requestFocus();
+    //roomEditText.setVisibility(View.INVISIBLE);
+    roomEditText.setEnabled(false);
+    //roomEditText.requestFocus();
 
     roomListView = findViewById(R.id.room_listview);
     roomListView.setEmptyView(findViewById(android.R.id.empty));
     roomListView.setOnItemClickListener(roomListClickListener);
     registerForContextMenu(roomListView);
     ImageButton connectButton = findViewById(R.id.connect_button);
+
     connectButton.setOnClickListener(connectListener);
-    addFavoriteButton = findViewById(R.id.add_favorite_button);
-    addFavoriteButton.setOnClickListener(addFavoriteListener);
+    callerButton = findViewById(R.id.caller_button);
+    callerButton.setOnClickListener(callerListener);
+
+    receiverButton = findViewById(R.id.reciever_button);
+    receiverButton.setOnClickListener(receiverListener);
+
+    receiverView = findViewById(R.id.reciever_description_view);
+    hintView = findViewById(R.id.room_edittext_description);
 
     requestPermissions();
+  }
+
+  private void logAndToast(String msg) {
+    if (logToast != null) {
+      logToast.cancel();
+    }
+    logToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+    logToast.show();
   }
 
   @Override
@@ -675,13 +698,29 @@ public class ConnectActivity extends Activity {
         }
       };
 
-  private final OnClickListener addFavoriteListener = new OnClickListener() {
+  private final OnClickListener callerListener = new OnClickListener() {
     @Override
     public void onClick(View view) {
-      String newRoom = roomEditText.getText().toString();
-      if (newRoom.length() > 0 && !roomList.contains(newRoom)) {
-        adapter.add(newRoom);
-        adapter.notifyDataSetChanged();
+      roomEditText.setEnabled(true);
+      roomEditText.requestFocus();
+      hintView.setText("你现在是呼叫方,请输入对方ip后呼叫");
+      hintView.setTextColor(Color.RED);
+    }
+  };
+
+  private final OnClickListener receiverListener = new OnClickListener() {
+    @Override
+    public void onClick(View view) {
+      roomEditText.setEnabled(false);
+      hintView.setText("你现在是接收方,请对方呼叫");
+      hintView.setTextColor(Color.RED);
+      try {
+        String localIp = getLocalIPAddress();
+        if(localIp.isEmpty())
+          logAndToast("获取不到ip地址，要先连接wifi");
+        receiverView.setText("本机IP:"+localIp+",请对方输入");
+      } catch (SocketException e) {
+        Log.e(TAG, "获取本地IP失败", e);
       }
     }
   };
@@ -793,6 +832,9 @@ public class ConnectActivity extends Activity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    if (logToast != null) {
+      logToast.cancel();
+    }
     // 不要在这里关闭全局监听器，让它保持运行
     // if (globalListener != null) {
     //   globalListener.disconnect();
