@@ -67,7 +67,7 @@
             android:layout_height="48dp"
             android:background="@drawable/button_raised_selector"
             android:elevation="4dp"
-            android:text="我是接收方"
+            android:text="我是接听方"
             android:textColor="#8EC74B" />
 
 		<TextView

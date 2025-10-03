@@ -125,6 +125,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   public static final String EXTRA_IS_SERVER = "org.appspot.apprtc.IS_INCOMING";
   public static final String EXTRA_TCP_MSG = "org.appspot.apprtc.INCOMING_OFFER";
 
+  public static TCPChannelClient serverTCP=null;
+  public static boolean callCreated=false;
+  //private TCPChannelClient clientTCP=null;
+
   private static final int CAPTURE_PERMISSION_REQUEST_CODE = 1;
 
   // List of mandatory application permissions.
@@ -133,6 +137,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
   // Peer connection statistics callback period in ms.
   private static final int STAT_CALLBACK_PERIOD = 1000;
+
   private String roomId;
 
   private static class ProxyVideoSink implements VideoSink {
@@ -157,7 +162,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private final ProxyVideoSink localProxyVideoSink = new ProxyVideoSink();
   @Nullable private PeerConnectionClient peerConnectionClient;
   @Nullable
-  private AppRTCClient appRtcClient;
+  private static AppRTCClient appRtcClient=null;
   @Nullable
   private SignalingParameters signalingParameters;
   @Nullable private AppRTCAudioManager audioManager;
@@ -209,6 +214,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     connected = false;
     signalingParameters = null;
+    callCreated=true;
 
     // Create UI controls.
     //pipRenderer = findViewById(R.id.pip_video_view);
@@ -383,33 +389,33 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     appRtcClient.connectToRoom(roomConnectionParameters);*/
     appRtcClient.handleTcpConnected(SocketManager.getInstance().getSocket(), isServer);
 
+    audioManagerCreate();
+
     logAndToast("initialized peerConnectionClient: " + peerConnectionClient);
     String tcpMessage = intent.getStringExtra(EXTRA_TCP_MSG);
     Log.d(TAG, "tcpMessage: " + tcpMessage);
     try {
-      if (tcpMessage != null) {
+      if (tcpMessage != null&&isServer) {
         JSONObject jsonObject = new JSONObject(tcpMessage);
         String type = jsonObject.optString("type");
         Log.d("zzy", "type: " + type);
-        /*if ("offer".equals(type)) {
-          showIncomingCallDialog(tcpMessage);
-        } else {*/
-          appRtcClient.handleIncomingMessage(tcpMessage);
-        //}
+        appRtcClient.handleIncomingMessage(tcpMessage);
         return;
       }
     } catch (JSONException e) {
       throw new RuntimeException(e);
     }
 
+    if(!isServer)
+        startCall();
 
-    if (screencaptureEnabled) {
-      startScreenCapture();
-    } else {
-      startCall();
-    }
   }
 
+  public static void sendIncomingMessage(String msg) {
+    Log.d("zzy", "sendIncomingMessage");
+    assert appRtcClient != null;
+    appRtcClient.handleIncomingMessage(msg);
+  }
   @Override
   protected void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
@@ -538,6 +544,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       logToast.cancel();
     }
     activityRunning = false;
+    callCreated=false;
+    appRtcClient=null;
     super.onDestroy();
   }
 
@@ -594,17 +602,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     ft.commit();*/
   }
 
-  private void startCall() {
-    if (appRtcClient == null) {
-      Log.e(TAG, "AppRTC client is not allocated for a call.");
-      return;
-    }
-    callStartedTimeMs = System.currentTimeMillis();
-
-    // Start room connection.
-    logAndToast(getString(R.string.connecting_to_room, roomConnectionParameters.roomId));
-    appRtcClient.connectToRoom(roomConnectionParameters);
-
+  private void audioManagerCreate() {
     // Create and audio manager that will take care of audio routing,
     // audio modes, audio device enumeration etc.
     audioManager = AppRTCAudioManager.create(getApplicationContext());
@@ -616,10 +614,20 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       // devices has changed.
       @Override
       public void onAudioDeviceChanged(
-          AudioDevice audioDevice, Set<AudioDevice> availableAudioDevices) {
+              AudioDevice audioDevice, Set<AudioDevice> availableAudioDevices) {
         onAudioManagerDevicesChanged(audioDevice, availableAudioDevices);
       }
     });
+  }
+  private void startCall() {
+    if (appRtcClient == null) {
+      Log.e(TAG, "AppRTC client is not allocated for a call.");
+      return;
+    }
+    callStartedTimeMs = System.currentTimeMillis();
+    // Start room connection.
+    logAndToast(getString(R.string.connecting_to_room, roomConnectionParameters.roomId));
+    appRtcClient.connectToRoom(roomConnectionParameters);
   }
 
   // Should be called from UI thread
@@ -647,24 +655,21 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   // Disconnect from remote resources, dispose of local resources, and exit.
   private void disconnect() {
     (new Throwable("disconnect")).printStackTrace();
-    /*activityRunning = false;
+    activityRunning = false;
+/*    if (serverTCP != null) {
+      serverTCP.stopServer();
+      serverTCP=null;
+    }*/
     remoteProxyRenderer.setTarget(null);
     localProxyVideoSink.setTarget(null);
     if (appRtcClient != null) {
       appRtcClient.disconnectFromRoom();
       appRtcClient = null;
     }
-    if (pipRenderer != null) {
-      pipRenderer.release();
-      pipRenderer = null;
-    }
+
     if (videoFileRenderer != null) {
       videoFileRenderer.release();
       videoFileRenderer = null;
-    }
-    if (fullscreenRenderer != null) {
-      fullscreenRenderer.release();
-      fullscreenRenderer = null;
     }
     if (peerConnectionClient != null) {
       peerConnectionClient.close();
@@ -679,7 +684,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     } else {
       setResult(RESULT_CANCELED);
     }
-    finish();*/
+    finish();
   }
 
   private void disconnectWithErrorMessage(final String errorMessage) {

@@ -63,6 +63,17 @@ public class TCPChannelClient {
   private Timer heartbeatTimer;
   private Thread serverThread;
   private Thread clientThread;
+  
+  // 服务器状态跟踪
+  private volatile ServerState serverState = ServerState.NOT_STARTED;
+
+  // 服务器状态枚举
+  private enum ServerState {
+    NOT_STARTED,    // 未启动
+    STARTING,       // 正在启动
+    LISTENING,      // 正在监听
+    STOPPED         // 已停止
+  }
 
   /**
    * Callback interface for messages delivered on TCP Connection. All callbacks are invoked from the
@@ -130,9 +141,17 @@ public class TCPChannelClient {
   }
 
   private void startServer() {
+    // 检查是否已经启动
+    if (serverState != ServerState.NOT_STARTED) {
+      Log.w(TAG, "服务器已经启动或正在启动，状态: " + serverState);
+      return;
+    }
+    
+    serverState = ServerState.STARTING;
     serverThread = new Thread(() -> {
       try {
         serverSocket = new ServerSocket(port, 0, InetAddress.getByName("0.0.0.0"));
+        serverState = ServerState.LISTENING;
         Log.d(TAG, "开始监听端口: " + port);
         
         Socket socket = serverSocket.accept();
@@ -149,10 +168,84 @@ public class TCPChannelClient {
         }
         
       } catch (IOException e) {
-        Log.w(TAG, "监听失败: " + e.getMessage());
+        // 检查是否是因主动关闭ServerSocket导致的异常
+        if (serverState == ServerState.STOPPED) {
+          Log.d(TAG, "服务器监听已主动停止");
+        } else {
+          Log.w(TAG, "监听失败: " + e.getMessage());
+          reportError("监听失败: " + e.getMessage());
+        }
+      } finally {
+        // 如果不是主动停止的状态，则更新为已停止
+        if (serverState != ServerState.STOPPED) {
+          serverState = ServerState.NOT_STARTED;
+        }
       }
     });
     serverThread.start();
+  }
+
+  /**
+   * 停止服务器监听并退出监听线程
+   * @return true表示成功停止，false表示无需停止（服务器未运行）
+   */
+  public boolean stopServer() {
+    // 检查服务器状态，决定是否有必要停止
+    if (serverState == ServerState.NOT_STARTED || serverState == ServerState.STOPPED) {
+      Log.d(TAG, "服务器未运行，无需停止，当前状态: " + serverState);
+      return false;
+    }
+    
+    Log.d(TAG, "停止服务器监听，当前状态: " + serverState);
+    serverState = ServerState.STOPPED;
+    
+    try {
+      if (serverSocket != null && !serverSocket.isClosed()) {
+        serverSocket.close();
+        Log.d(TAG, "ServerSocket已关闭，将中断accept()阻塞");
+      }
+    } catch (IOException e) {
+      Log.e(TAG, "关闭ServerSocket时发生错误: " + e.getMessage());
+    }
+    
+    // 中断服务器线程以确保快速响应
+    if (serverThread != null && serverThread.isAlive()) {
+      serverThread.interrupt();
+      Log.d(TAG, "已中断服务器线程");
+    }
+    
+    // 可选：等待线程完全结束
+/*    if (serverThread != null && serverThread.isAlive()) {
+      try {
+        serverThread.join(500); // 等待最多500ms
+        if (!serverThread.isAlive()) {
+          Log.d(TAG, "服务器线程已终止");
+        }
+      } catch (InterruptedException e) {
+        Log.w(TAG, "等待服务器线程终止时被中断");
+        Thread.currentThread().interrupt();
+      }
+    }*/
+    
+    serverSocket = null;
+    serverThread = null;
+    return true;
+  }
+  
+  /**
+   * 检查服务器是否正在运行
+   * @return true表示服务器正在运行（启动中或监听中）
+   */
+  public boolean isServerRunning() {
+    return serverState == ServerState.STARTING || serverState == ServerState.LISTENING;
+  }
+  
+  /**
+   * 获取服务器当前状态
+   * @return 服务器状态
+   */
+  public ServerState getServerState() {
+    return serverState;
   }
 
   private void startClient() {
@@ -288,6 +381,9 @@ public class TCPChannelClient {
     Log.d(TAG, "断开连接");
     connected = false;
     
+    // 停止服务器监听
+    stopServer();
+    
     if (heartbeatTimer != null) {
       heartbeatTimer.cancel();
       heartbeatTimer = null;
@@ -305,10 +401,6 @@ public class TCPChannelClient {
       if (clientSocket != null) {
         clientSocket.close();
         clientSocket = null;
-      }
-      if (serverSocket != null) {
-        serverSocket.close();
-        serverSocket = null;
       }
     } catch (IOException e) {
       Log.e(TAG, "关闭连接时发生错误: " + e.getMessage());

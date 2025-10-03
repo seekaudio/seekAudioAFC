@@ -91,11 +91,11 @@ public class ConnectActivity extends Activity {
   private String keyprefRoomList;
   private ArrayList<String> roomList;
   private ArrayAdapter<String> adapter;
-  private static TCPChannelClient globalListener;
   private static Socket incomingSocket;
   private static String incomingMessage;
   private Socket mSocket;
   public static boolean sIsServer;
+  public static String localIp;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -115,9 +115,6 @@ public class ConnectActivity extends Activity {
     keyprefRoomList = getString(R.string.pref_room_list_key);
 
     setContentView(R.layout.activity_connect);
-
-    // 启动全局TCP监听服务
-    startGlobalListener();
 
     roomEditText = findViewById(R.id.room_edittext);
     roomEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -149,6 +146,7 @@ public class ConnectActivity extends Activity {
 
     receiverView = findViewById(R.id.reciever_description_view);
     hintView = findViewById(R.id.room_edittext_description);
+    hintView.setTextColor(Color.RED);
 
     requestPermissions();
   }
@@ -263,7 +261,7 @@ public class ConnectActivity extends Activity {
       if (missingPermissions.length != 0) {
         // User didn't grant all the permissions. Warn that the application might not work
         // correctly.
-        new AlertDialog.Builder(this)
+/*        new AlertDialog.Builder(this)
             .setMessage(R.string.missing_permissions_try_again)
             .setPositiveButton(R.string.yes,
                 (dialog, id) -> {
@@ -277,7 +275,7 @@ public class ConnectActivity extends Activity {
                   dialog.cancel();
                   onPermissionsGranted();
                 })
-            .show();
+            .show();*/
       } else {
         // All permissions granted.
         onPermissionsGranted();
@@ -705,6 +703,8 @@ public class ConnectActivity extends Activity {
       roomEditText.requestFocus();
       hintView.setText("你现在是呼叫方,请输入对方ip后呼叫");
       hintView.setTextColor(Color.RED);
+      stopGlobalListener();
+      sIsServer=false;
     }
   };
 
@@ -715,13 +715,21 @@ public class ConnectActivity extends Activity {
       hintView.setText("你现在是接收方,请对方呼叫");
       hintView.setTextColor(Color.RED);
       try {
-        String localIp = getLocalIPAddress();
-        if(localIp.isEmpty())
-          logAndToast("获取不到ip地址，要先连接wifi");
-        receiverView.setText("本机IP:"+localIp+",请对方输入");
+        localIp = getLocalIPAddress();
       } catch (SocketException e) {
         Log.e(TAG, "获取本地IP失败", e);
       }
+
+      if(localIp.isEmpty())
+        logAndToast("获取不到ip地址，要先连接wifi");
+      else
+      {
+        receiverView.setText("本机IP:"+localIp+",请对方输入");
+        sIsServer=true;
+        // 启动全局TCP监听服务
+        startGlobalListener();
+      }
+
     }
   };
 
@@ -738,11 +746,17 @@ public class ConnectActivity extends Activity {
       connectToRoom(null, false, true, false, 0);
     }
   };
-
+  private void stopGlobalListener()
+  {
+    if (CallActivity.serverTCP != null&&sIsServer) {
+      CallActivity.serverTCP.stopServer();
+      CallActivity.serverTCP=null;
+    }
+  }
   private void startGlobalListener() {
-    if (globalListener == null) {
+    if (CallActivity.serverTCP == null) {
       Log.d(TAG, "[socket]启动全局TCP监听服务");
-      globalListener = new TCPChannelClient(
+      CallActivity.serverTCP = new TCPChannelClient(
           java.util.concurrent.Executors.newSingleThreadExecutor(),
           new TCPChannelClient.TCPChannelEvents() {
             @Override
@@ -761,17 +775,22 @@ public class ConnectActivity extends Activity {
               String remoteIp = mSocket.getInetAddress().getHostAddress(); // 获取真实连接方IP
               Log.d(TAG, "[socket]remoteIp: " + remoteIp);
 
-              // 在主线程中启动CallActivity
-              runOnUiThread(() -> {
-                Intent intent = new Intent(ConnectActivity.this, CallActivity.class);
-                intent.putExtra(CallActivity.EXTRA_ROOMID, remoteIp);
-                intent.putExtra(CallActivity.EXTRA_LOOPBACK, false);
-                intent.putExtra(CallActivity.EXTRA_IS_SERVER, sIsServer);
-                intent.putExtra(CallActivity.EXTRA_TCP_MSG, rawMessage);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-              });
-
+              if(CallActivity.callCreated)
+              {
+                CallActivity.sendIncomingMessage(rawMessage);
+              }else {
+                // 在主线程中启动CallActivity
+                runOnUiThread(() -> {
+                  Intent intent = new Intent(ConnectActivity.this, CallActivity.class);
+                  intent.putExtra(CallActivity.EXTRA_ROOMID, remoteIp);
+                  intent.putExtra(CallActivity.EXTRA_LOOPBACK, false);
+                  intent.putExtra(CallActivity.EXTRA_IS_SERVER, sIsServer);
+                  intent.putExtra(CallActivity.EXTRA_TCP_MSG, rawMessage);
+                  intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                  //CallActivity.callCreated=true;
+                  startActivity(intent);
+                });
+              }
             }
 
             @Override
