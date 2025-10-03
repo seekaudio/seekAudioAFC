@@ -13,6 +13,7 @@
         android:id="@+id/room_edittext_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+		android:textSize="12sp"
         android:text="@string/room_description"/>
 
     <LinearLayout
@@ -107,32 +108,123 @@
 	</LinearLayout>
 	
 	<TextView
-        android:id="@+id/room_listview_description"
+        android:id="@+id/howl_testview_status"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:lines="1"
-        android:maxLines="1"
+		android:textSize="12sp"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/favorites"
+        android:text="下面可以打开啸叫抑制功能"
         android:gravity="center_vertical"/>
 
-    <FrameLayout
+	<LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
 
-        <ListView
-            android:id="@+id/room_listview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:drawSelectorOnTop="false" />
+		<Button
+            android:id="@+id/howl_button"
+            android:layout_width="120dp"
+            android:layout_height="48dp"
+            android:background="@drawable/button_raised_selector"
+            android:elevation="4dp"
+            android:text="打开啸叫抑制"
+			android:textSize="8sp"
+            android:textColor="#8EC74B" />
+		<Spinner
+			android:id="@+id/howl_spinner"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:layout_margin="16dp" />
+	</LinearLayout>
 
-        <TextView
-            android:id="@android:id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/no_favorites" />
-    </FrameLayout>
+	<TextView
+	android:id="@+id/agc_testview_status"
+	android:layout_width="match_parent"
+	android:layout_height="48dp"
+	android:layout_marginTop="8dp"
+	android:textSize="12sp"
+	android:textAppearance="?android:attr/textAppearanceMedium"
+	android:text="下面可以打开和设置agc"
+	android:gravity="center_vertical"/>
+
+	<LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+		<Button
+            android:id="@+id/agc_button"
+            android:layout_width="120dp"
+            android:layout_height="48dp"
+            android:background="@drawable/button_raised_selector"
+            android:elevation="4dp"
+            android:text="开启agc"
+			android:textSize="8sp"
+            android:textColor="#8EC74B" />
+	</LinearLayout>
+
+	<LinearLayout
+		android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+	    <TextView
+		    android:id="@+id/agc_target_view"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight="1"
+		    android:textColorHint="#999999"
+		    android:textSize="10sp"
+		    android:text="target_dbfs:" />
+
+	    <EditText
+	        android:id="@+id/agc_target_edittext"
+	        android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:minHeight="48dp"
+	        android:layout_weight="1"
+	        android:hint="请输入一个target值"
+	        android:imeOptions="actionDone"
+			android:inputType="number"
+	        android:maxLines="1"
+	        android:textSize="10sp"
+	        android:textColorHint="#999999"
+	        tools:ignore="LabelFor,Autofill" />
+	</LinearLayout>
+
+	<LinearLayout
+		android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+		<TextView
+		    android:id="@+id/agc_gain_view"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:layout_weight="1"
+		    android:textColorHint="#999999"
+		    android:textSize="10sp"
+		    android:text="gain_db:" />
+
+		<EditText
+	        android:id="@+id/agc_gain_edittext"
+	        android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:minHeight="48dp"
+	        android:layout_weight="1"
+	        android:hint="请输入一个gain值"
+	        android:imeOptions="actionDone"
+			android:inputType="number"
+	        android:maxLines="1"
+	        android:textSize="10sp"
+	        android:textColorHint="#999999"
+	        tools:ignore="LabelFor,Autofill" />
+	</LinearLayout>
 </LinearLayout>

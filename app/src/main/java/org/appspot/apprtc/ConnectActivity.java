@@ -39,11 +39,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -53,7 +55,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Random;
+import android.text.TextWatcher;
+import android.text.Editable;
 
+import org.appspot.apprtc.util.IniFileHandler;
 import org.appspot.apprtc.util.SocketManager;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -72,13 +77,22 @@ public class ConnectActivity extends Activity {
   private Toast logToast;
   private Button callerButton;
   private Button receiverButton;
+  private Button howlButton;
+  private Button agcButton;
   private TextView receiverView;
   private TextView hintView;
+  private TextView howlHintView;
+  private TextView agcHintView;
   private EditText roomEditText;
+  private Spinner howlSpinner;
+  private EditText howlTargeEditText;
+  private EditText howlGainEditText;
+
   private EditText roomEditTextDescription;
   private Button connectButton;
   private Button loopbackButton;
-  private ListView roomListView;
+
+  //private ListView roomListView;
   private SharedPreferences sharedPref;
   private String keyprefResolution;
   private String keyprefFps;
@@ -94,8 +108,19 @@ public class ConnectActivity extends Activity {
   private static Socket incomingSocket;
   private static String incomingMessage;
   private Socket mSocket;
-  public static boolean sIsServer;
+  public static boolean sIsServer=true;
   public static String localIp;
+
+  private boolean IsHowlOpened=false;
+  private boolean IsAgcOpened=false;
+  private float suppress_level=0;
+  private float target_level_dbfs=5;
+  private float compression_gain_db=20;
+  private float enable_limiter=1;
+  private float enable_agc=0;
+  private String log_folder_path="/data/data/org.appspot.apprtc/";
+
+  private IniFileHandler IniHandler=null;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -131,10 +156,48 @@ public class ConnectActivity extends Activity {
     roomEditText.setEnabled(false);
     //roomEditText.requestFocus();
 
-    roomListView = findViewById(R.id.room_listview);
-    roomListView.setEmptyView(findViewById(android.R.id.empty));
-    roomListView.setOnItemClickListener(roomListClickListener);
-    registerForContextMenu(roomListView);
+    howlTargeEditText = findViewById(R.id.agc_target_edittext);
+    howlTargeEditText.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 文本改变前调用
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // 文本改变时调用
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // 文本改变后调用 - 主要在这里处理
+        onNumberTargetInputChanged(s.toString());
+      }
+    });
+
+    howlGainEditText = findViewById(R.id.agc_gain_edittext);
+    howlGainEditText.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 文本改变前调用
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // 文本改变时调用
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // 文本改变后调用 - 主要在这里处理
+        onNumberGainInputChanged(s.toString());
+      }
+    });
+
+    //roomListView = findViewById(R.id.room_listview);
+    //roomListView.setEmptyView(findViewById(android.R.id.empty));
+    //roomListView.setOnItemClickListener(roomListClickListener);
+    //registerForContextMenu(roomListView);
     ImageButton connectButton = findViewById(R.id.connect_button);
 
     connectButton.setOnClickListener(connectListener);
@@ -148,9 +211,80 @@ public class ConnectActivity extends Activity {
     hintView = findViewById(R.id.room_edittext_description);
     hintView.setTextColor(Color.RED);
 
+    howlHintView = findViewById(R.id.howl_testview_status);
+    howlHintView.setTextColor(Color.RED);
+
+    howlButton = findViewById(R.id.howl_button);
+    howlButton.setOnClickListener(howlListener);
+
+    agcHintView = findViewById(R.id.agc_testview_status);
+    agcHintView.setTextColor(Color.RED);
+
+    agcButton = findViewById(R.id.agc_button);
+    agcButton.setOnClickListener(agcListener);
+
+
+    howlSpinner = findViewById(R.id.howl_spinner);
+    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.spinner_items,
+            android.R.layout.simple_spinner_item
+    );
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    howlSpinner.setAdapter(adapter);
+
+    howlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String selectedItem = parent.getItemAtPosition(position).toString();
+        suppress_level=(float)position;
+        if(IsHowlOpened)
+        {
+          if(position==0)
+             howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position)+",0没有任何效果");
+          else if(position==1)
+            howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position)+",1的效果很差");
+          else
+            howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position));
+        }
+        saveConfig();
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+        // 当没有选择任何项时调用
+      }
+    });
+
+    howlSpinner.setEnabled(false);
+    howlSpinner.setSelection(2);
+    IsHowlOpened=false;
+    howlSpinner.setEnabled(false);
+    howlButton.setText("开启啸叫抑制");
+
+    saveConfig();
     requestPermissions();
   }
 
+  private void saveConfig()
+  {
+      if(IniHandler==null)
+        IniHandler = new IniFileHandler(log_folder_path+"iniconfig.ini");
+
+    IniHandler.setValue("log_folder_path",log_folder_path);
+    IniHandler.setValue("suppress_level",String.valueOf(suppress_level));
+    IniHandler.setValue("target_level_dbfs",String.valueOf(target_level_dbfs));
+    IniHandler.setValue("compression_gain_db",String.valueOf(compression_gain_db));
+    IniHandler.setValue("enable_limiter",String.valueOf(enable_limiter));
+    IniHandler.setValue("enable_agc",String.valueOf(enable_agc));
+
+    try {
+      IniHandler.save();
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+
+  }
   private void logAndToast(String msg) {
     if (logToast != null) {
       logToast.cancel();
@@ -165,18 +299,42 @@ public class ConnectActivity extends Activity {
     return true;
   }
 
+  private void onNumberTargetInputChanged(String inputText) {
+    if (inputText.isEmpty()) {
+      // 输入为空时的处理
+      //Log.d("Input", "输入为空");
+      return;
+    }
+
+    try {
+      float number = Float.parseFloat(inputText);
+      target_level_dbfs=number;
+      agcHintView.setText("AGC已打开,target_dbfs是"+Integer.toString((int)target_level_dbfs)+",gain_db是"+Integer.toString((int)compression_gain_db));
+      saveConfig();
+    } catch (NumberFormatException e) {
+    }
+  }
+
+  private void onNumberGainInputChanged(String inputText) {
+    if (inputText.isEmpty()) {
+      // 输入为空时的处理
+      //Log.d("Input", "输入为空");
+      return;
+    }
+
+    try {
+      // 将字符串转换为数字
+      float number = Float.parseFloat(inputText);
+      compression_gain_db=number;
+      agcHintView.setText("AGC已打开,target_dbfs是"+Integer.toString((int)target_level_dbfs)+",gain_db是"+Integer.toString((int)compression_gain_db));
+      saveConfig();
+    } catch (NumberFormatException e) {
+    }
+  }
+
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-    if (v.getId() == R.id.room_listview) {
-      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-      menu.setHeaderTitle(roomList.get(info.position));
-      String[] menuItems = getResources().getStringArray(R.array.roomListContextMenu);
-      for (int i = 0; i < menuItems.length; i++) {
-        menu.add(Menu.NONE, i, i, menuItems[i]);
-      }
-    } else {
       super.onCreateContextMenu(menu, v, menuInfo);
-    }
   }
 
   @Override
@@ -235,12 +393,12 @@ public class ConnectActivity extends Activity {
         Log.e(TAG, "Failed to load room list: " + e.toString());
       }
     }
-    adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, roomList);
+/*    adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, roomList);
     roomListView.setAdapter(adapter);
     if (adapter.getCount() > 0) {
       roomListView.requestFocus();
       roomListView.setItemChecked(0, true);
-    }
+    }*/
   }
 
   @Override
@@ -687,14 +845,14 @@ public class ConnectActivity extends Activity {
     return false;
   }
 
-  private final AdapterView.OnItemClickListener roomListClickListener =
+/*  private final AdapterView.OnItemClickListener roomListClickListener =
       new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
           String roomId = ((TextView) view).getText().toString();
           connectToRoom(roomId, false, false, false, 0);
         }
-      };
+      };*/
 
   private final OnClickListener callerListener = new OnClickListener() {
     @Override
@@ -705,6 +863,50 @@ public class ConnectActivity extends Activity {
       hintView.setTextColor(Color.RED);
       stopGlobalListener();
       sIsServer=false;
+    }
+  };
+
+  private final OnClickListener agcListener = new OnClickListener() {
+    @Override
+    public void onClick(View view) {
+      if(IsAgcOpened)
+      {
+        IsAgcOpened=false;
+        agcButton.setText("打开AGC");
+        agcHintView.setText("AGC已经关闭");
+        enable_agc=0;
+      }
+      else
+      {
+        IsAgcOpened=true;
+        agcButton.setText("关闭AGC");
+        agcHintView.setText("AGC已打开,target_dbfs是"+Integer.toString((int)target_level_dbfs)+",gain_db是"+Integer.toString((int)compression_gain_db));
+        enable_agc=1;
+      }
+      saveConfig();
+    }
+  };
+
+  private final OnClickListener howlListener = new OnClickListener() {
+    @Override
+    public void onClick(View view) {
+      if(IsHowlOpened)
+      {
+        IsHowlOpened=false;
+        howlSpinner.setEnabled(false);
+        howlButton.setText("打开啸叫抑制");
+        howlHintView.setText("啸叫抑制已经关闭");
+        suppress_level=0;
+      }
+      else
+      {
+        IsHowlOpened=true;
+        howlSpinner.setEnabled(true);
+        suppress_level=(float)howlSpinner.getSelectedItemPosition();
+        howlButton.setText("关闭啸叫抑制");
+        howlHintView.setText("啸叫抑制已经打开，请选择一个级别，不同级别会有不同效果");
+      }
+      saveConfig();
     }
   };
 
@@ -736,6 +938,12 @@ public class ConnectActivity extends Activity {
   private final OnClickListener connectListener = new OnClickListener() {
     @Override
     public void onClick(View view) {
+      if(sIsServer)
+      {
+        logAndToast("你不是呼叫方，不能呼叫");
+        return;
+      }
+
       connectToRoom(roomEditText.getText().toString(), false, false, false, 0);
     }
   };
