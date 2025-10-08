@@ -45,12 +45,14 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -119,6 +121,8 @@ public class ConnectActivity extends Activity {
   private float enable_limiter=1;
   private float enable_agc=0;
   private String log_folder_path="/data/data/org.appspot.apprtc/";
+
+  private Thread restartThread;
 
   private IniFileHandler IniHandler=null;
 
@@ -264,6 +268,26 @@ public class ConnectActivity extends Activity {
 
     saveConfig();
     requestPermissions();
+    restartThread = new Thread(() -> {
+        while (!restartThread.interrupted()) {
+          try {
+            Thread.sleep(100);
+          } catch (Exception e)
+          {
+          }
+
+          if(CallActivity.serverRestart)
+          {
+            CallActivity.serverRestart = false;
+            if(sIsServer)
+            {
+              stopGlobalListener();
+              startGlobalListener();
+            }
+          }
+        }
+    });
+    restartThread.start();
   }
 
   private void saveConfig()
@@ -1062,6 +1086,7 @@ public class ConnectActivity extends Activity {
     if (logToast != null) {
       logToast.cancel();
     }
+    restartThread.interrupt();
     // 不要在这里关闭全局监听器，让它保持运行
     // if (globalListener != null) {
     //   globalListener.disconnect();

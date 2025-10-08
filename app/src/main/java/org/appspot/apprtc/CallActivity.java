@@ -127,6 +127,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
   public static TCPChannelClient serverTCP=null;
   public static boolean callCreated=false;
+  public static boolean serverRestart=false;
   //private TCPChannelClient clientTCP=null;
 
   private static final int CAPTURE_PERMISSION_REQUEST_CODE = 1;
@@ -656,10 +657,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private void disconnect() {
     (new Throwable("disconnect")).printStackTrace();
     activityRunning = false;
-/*    if (serverTCP != null) {
-      serverTCP.stopServer();
-      serverTCP=null;
-    }*/
+    serverRestart=true;
     remoteProxyRenderer.setTarget(null);
     localProxyVideoSink.setTarget(null);
     if (appRtcClient != null) {

@@ -142,6 +142,7 @@ public class TCPChannelClient {
 
   private void startServer() {
     // 检查是否已经启动
+    Log.w(TAG, "startServer state: " + serverState);
     if (serverState != ServerState.NOT_STARTED) {
       Log.w(TAG, "服务器已经启动或正在启动，状态: " + serverState);
       return;
@@ -152,37 +153,41 @@ public class TCPChannelClient {
       try {
         serverSocket = new ServerSocket(port, 0, InetAddress.getByName("0.0.0.0"));
         serverState = ServerState.LISTENING;
-        Log.d(TAG, "开始监听端口: " + port);
+        Log.w(TAG, "开始监听端口: " + port);
         
         Socket socket = serverSocket.accept();
-        Log.d(TAG, "收到连接: " + socket.getInetAddress().getHostAddress());
+        Log.w(TAG, "收到连接: " + socket.getInetAddress().getHostAddress());
         
         synchronized (this) {
           if (connected) {
             socket.close();
+            Log.w(TAG, "startServer socket.close" );
             return;
           }
           connected = true;
           activeSocket = socket;
+          Log.w(TAG, "startServer setupSocket: " + serverState);
           setupSocket(socket, true);
         }
         
       } catch (IOException e) {
         // 检查是否是因主动关闭ServerSocket导致的异常
         if (serverState == ServerState.STOPPED) {
-          Log.d(TAG, "服务器监听已主动停止");
+          Log.w(TAG, "服务器监听已主动停止");
         } else {
           Log.w(TAG, "监听失败: " + e.getMessage());
           reportError("监听失败: " + e.getMessage());
         }
       } finally {
         // 如果不是主动停止的状态，则更新为已停止
+        Log.w(TAG, "startServer update state: " + serverState);
         if (serverState != ServerState.STOPPED) {
-          serverState = ServerState.NOT_STARTED;
+          //serverState = ServerState.NOT_STARTED;
         }
       }
     });
     serverThread.start();
+    Log.w(TAG, "startServer ok: " + serverState);
   }
 
   /**
@@ -191,18 +196,19 @@ public class TCPChannelClient {
    */
   public boolean stopServer() {
     // 检查服务器状态，决定是否有必要停止
+    Log.w(TAG, "stopServer state: " + serverState);
     if (serverState == ServerState.NOT_STARTED || serverState == ServerState.STOPPED) {
-      Log.d(TAG, "服务器未运行，无需停止，当前状态: " + serverState);
+      Log.w(TAG, "服务器未运行，无需停止，当前状态: " + serverState);
       return false;
     }
     
-    Log.d(TAG, "停止服务器监听，当前状态: " + serverState);
+    Log.w(TAG, "停止服务器监听，当前状态: " + serverState);
     serverState = ServerState.STOPPED;
     
     try {
       if (serverSocket != null && !serverSocket.isClosed()) {
         serverSocket.close();
-        Log.d(TAG, "ServerSocket已关闭，将中断accept()阻塞");
+        Log.w(TAG, "ServerSocket已关闭，将中断accept()阻塞");
       }
     } catch (IOException e) {
       Log.e(TAG, "关闭ServerSocket时发生错误: " + e.getMessage());
@@ -211,7 +217,7 @@ public class TCPChannelClient {
     // 中断服务器线程以确保快速响应
     if (serverThread != null && serverThread.isAlive()) {
       serverThread.interrupt();
-      Log.d(TAG, "已中断服务器线程");
+      Log.w(TAG, "已中断服务器线程");
     }
     
     // 可选：等待线程完全结束
@@ -226,7 +232,7 @@ public class TCPChannelClient {
         Thread.currentThread().interrupt();
       }
     }*/
-    
+    Log.w(TAG, "stopServer ok: " + serverState);
     serverSocket = null;
     serverThread = null;
     return true;
@@ -279,7 +285,8 @@ public class TCPChannelClient {
       socket.setTcpNoDelay(true);
       
 
-      Log.d(TAG, "Socket设置完成，isServer: " + isServer);
+      Log.w(TAG, "Socket设置完成，isServer: " + isServer);
+      Log.w(TAG, "setupSocket: " + serverState);
       // 在UI线程中触发连接事件
       new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
         eventListener.onTCPConnected(socket, isServer);
@@ -306,19 +313,20 @@ public class TCPChannelClient {
 
   private void listenSocket() {
     new Thread(() -> {
+      Log.w(TAG, "listenSocket: " + serverState);
       try {
         while (!Thread.interrupted()) {
           DataInputStream dis = new DataInputStream(activeSocket.getInputStream());
           int msgLen = dis.readInt();
           byte[] buffer = new byte[msgLen];
-          Log.d(TAG,"[socket]阻塞读取直至缓冲区（长度:" + msgLen + ")填满");
+          Log.w(TAG,"[socket]阻塞读取直至缓冲区（长度:" + msgLen + ")填满");
           dis.readFully(buffer);
           String msgStr = new String(buffer, StandardCharsets.UTF_8);
           eventListener.onTCPMessage(msgStr);
         }
 
       } catch (IOException e) {
-        Log.d(TAG,"[Socket] 监听异常: " + e.getMessage());
+        Log.w(TAG,"[Socket] 监听异常: " + e.getMessage());
       }
     }).start();
   }
