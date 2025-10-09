@@ -429,7 +429,7 @@ public class PeerConnectionClient {
       }
     }
 
-/*    final AudioDeviceModule adm = createJavaAudioDevice();*/
+    final AudioDeviceModule adm = createJavaAudioDevice();
 
     // Create peer connection factory.
     if (options != null) {
@@ -467,11 +467,12 @@ public class PeerConnectionClient {
     }
     assert builder != null;
     factory = builder.setOptions(options)
+                  .setAudioDeviceModule(adm)
                   .setVideoEncoderFactory(encoderFactory)
                   .setVideoDecoderFactory(decoderFactory)
                   .createPeerConnectionFactory();
     Log.d(TAG, "Peer connection factory created.");
-    /*adm.release();*/
+    adm.release();
   }
 
   AudioDeviceModule createJavaAudioDevice() {
@@ -584,17 +585,17 @@ public class PeerConnectionClient {
     // Create audio constraints.
     audioConstraints = new MediaConstraints();
     // added for audio performance measurements
-    if (peerConnectionParameters.noAudioProcessing) {
-      Log.d(TAG, "Disabling audio processing");
+    //if (peerConnectionParameters.noAudioProcessing) {
+      //Log.d(TAG, "Disabling audio processing");
       audioConstraints.mandatory.add(
-          new MediaConstraints.KeyValuePair(AUDIO_ECHO_CANCELLATION_CONSTRAINT, "false"));
+          new MediaConstraints.KeyValuePair(AUDIO_ECHO_CANCELLATION_CONSTRAINT, "true"));
       audioConstraints.mandatory.add(
-          new MediaConstraints.KeyValuePair(AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT, "false"));
+          new MediaConstraints.KeyValuePair(AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT, "true"));
       audioConstraints.mandatory.add(
           new MediaConstraints.KeyValuePair(AUDIO_HIGH_PASS_FILTER_CONSTRAINT, "false"));
       audioConstraints.mandatory.add(
-          new MediaConstraints.KeyValuePair(AUDIO_NOISE_SUPPRESSION_CONSTRAINT, "false"));
-    }
+          new MediaConstraints.KeyValuePair(AUDIO_NOISE_SUPPRESSION_CONSTRAINT, "true"));
+    //}
     // Create SDP constraints.
     sdpMediaConstraints = new MediaConstraints();
     sdpMediaConstraints.mandatory.add(

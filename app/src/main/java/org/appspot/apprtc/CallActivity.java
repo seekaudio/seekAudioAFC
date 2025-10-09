@@ -334,11 +334,16 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             intent.getBooleanExtra(EXTRA_NOAUDIOPROCESSING_ENABLED, false),
             intent.getBooleanExtra(EXTRA_AECDUMP_ENABLED, false),
             intent.getBooleanExtra(EXTRA_SAVE_INPUT_AUDIO_TO_FILE_ENABLED, false),
-            intent.getBooleanExtra(EXTRA_OPENSLES_ENABLED, false),
-            intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_AEC, false),
-            intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_AGC, false),
-            intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_NS, false),
-            intent.getBooleanExtra(EXTRA_DISABLE_WEBRTC_AGC_AND_HPF, false),
+            //intent.getBooleanExtra(EXTRA_OPENSLES_ENABLED, false),
+                true,
+            //intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_AEC, false),
+                true,
+            //intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_AGC, false),
+                true,
+            //intent.getBooleanExtra(EXTRA_DISABLE_BUILT_IN_NS, false),
+                true,
+            //intent.getBooleanExtra(EXTRA_DISABLE_WEBRTC_AGC_AND_HPF, false),
+                true,
             intent.getBooleanExtra(EXTRA_ENABLE_RTCEVENTLOG, false), dataChannelParameters
         );
     logAndToast("peerConnectionParameters: " + peerConnectionParameters);
