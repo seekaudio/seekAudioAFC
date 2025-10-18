@@ -23,6 +23,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -120,8 +121,8 @@ public class ConnectActivity extends Activity {
   private float compression_gain_db=20;
   private float enable_limiter=1;
   private float enable_agc=0;
-  private String log_folder_path="/data/data/org.appspot.apprtc/";
-
+  private String log_folder_path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/";
+  //private String log_folder_path=  "/data/data/org.appspot.apprtc/";
   private Thread restartThread;
 
   private IniFileHandler IniHandler=null;
@@ -144,6 +145,8 @@ public class ConnectActivity extends Activity {
     keyprefRoomList = getString(R.string.pref_room_list_key);
 
     setContentView(R.layout.activity_connect);
+
+    Log.e(TAG, "SEEKAUDIO,log_folder_path: " + log_folder_path);
 
     roomEditText = findViewById(R.id.room_edittext);
     roomEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -261,7 +264,7 @@ public class ConnectActivity extends Activity {
     });
 
     howlSpinner.setEnabled(false);
-    howlSpinner.setSelection(2);
+    howlSpinner.setSelection(0);
     IsHowlOpened=false;
     howlSpinner.setEnabled(false);
     howlButton.setText("开启啸叫抑制");
