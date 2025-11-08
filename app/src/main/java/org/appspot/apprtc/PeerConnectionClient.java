@@ -10,6 +10,7 @@
 
 package org.appspot.apprtc;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -562,6 +563,7 @@ public class PeerConnectionClient {
         .createAudioDeviceModule();
   }
 
+  @SuppressLint("SuspiciousIndentation")
   private void createMediaConstraintsInternal() {
     // Create video constraints if video call is enabled.
     if (isVideoCallEnabled()) {
@@ -588,13 +590,13 @@ public class PeerConnectionClient {
     //if (peerConnectionParameters.noAudioProcessing) {
       //Log.d(TAG, "Disabling audio processing");
       audioConstraints.mandatory.add(
-          new MediaConstraints.KeyValuePair(AUDIO_ECHO_CANCELLATION_CONSTRAINT, "true"));
+          new MediaConstraints.KeyValuePair(AUDIO_ECHO_CANCELLATION_CONSTRAINT, "false"));
       audioConstraints.mandatory.add(
           new MediaConstraints.KeyValuePair(AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT, "true"));
       audioConstraints.mandatory.add(
           new MediaConstraints.KeyValuePair(AUDIO_HIGH_PASS_FILTER_CONSTRAINT, "false"));
       audioConstraints.mandatory.add(
-          new MediaConstraints.KeyValuePair(AUDIO_NOISE_SUPPRESSION_CONSTRAINT, "true"));
+          new MediaConstraints.KeyValuePair(AUDIO_NOISE_SUPPRESSION_CONSTRAINT, "false"));
     //}
     // Create SDP constraints.
     sdpMediaConstraints = new MediaConstraints();

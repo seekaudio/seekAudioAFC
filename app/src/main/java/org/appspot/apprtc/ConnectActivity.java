@@ -81,13 +81,15 @@ public class ConnectActivity extends Activity {
   private Button callerButton;
   private Button receiverButton;
   private Button howlButton;
+  private Button echoButton;
   private Button agcButton;
   private TextView receiverView;
   private TextView hintView;
   private TextView howlHintView;
   private TextView agcHintView;
   private EditText roomEditText;
-  private Spinner howlSpinner;
+  private EditText howlLevelEditText;
+  private EditText echoLevelEditText;
   private EditText howlTargeEditText;
   private EditText howlGainEditText;
 
@@ -114,8 +116,8 @@ public class ConnectActivity extends Activity {
   public static boolean sIsServer=true;
   public static String localIp;
 
-  private boolean IsHowlOpened=false;
   private boolean IsAgcOpened=false;
+  private float echo_level=1;
   private float suppress_level=0;
   private float target_level_dbfs=5;
   private float compression_gain_db=20;
@@ -162,6 +164,44 @@ public class ConnectActivity extends Activity {
     //roomEditText.setVisibility(View.INVISIBLE);
     roomEditText.setEnabled(false);
     //roomEditText.requestFocus();
+
+    howlLevelEditText = findViewById(R.id.howl_level_edittext);
+    howlLevelEditText.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 文本改变前调用
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // 文本改变时调用
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // 文本改变后调用 - 主要在这里处理
+        onNumberHowlInputChanged(s.toString());
+      }
+    });
+
+    echoLevelEditText = findViewById(R.id.echo_level_edittext);
+    echoLevelEditText.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 文本改变前调用
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // 文本改变时调用
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // 文本改变后调用 - 主要在这里处理
+        onNumberEchoInputChanged(s.toString());
+      }
+    });
 
     howlTargeEditText = findViewById(R.id.agc_target_edittext);
     howlTargeEditText.addTextChangedListener(new TextWatcher() {
@@ -224,50 +264,17 @@ public class ConnectActivity extends Activity {
     howlButton = findViewById(R.id.howl_button);
     howlButton.setOnClickListener(howlListener);
 
+    echoButton = findViewById(R.id.echo_button);
+    echoButton.setOnClickListener(echoListener);
+
     agcHintView = findViewById(R.id.agc_testview_status);
     agcHintView.setTextColor(Color.RED);
 
     agcButton = findViewById(R.id.agc_button);
     agcButton.setOnClickListener(agcListener);
 
-
-    howlSpinner = findViewById(R.id.howl_spinner);
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-            this,
-            R.array.spinner_items,
-            android.R.layout.simple_spinner_item
-    );
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    howlSpinner.setAdapter(adapter);
-
-    howlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String selectedItem = parent.getItemAtPosition(position).toString();
-        suppress_level=(float)position;
-        if(IsHowlOpened)
-        {
-          if(position==0)
-             howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position)+",0没有任何效果");
-          else if(position==1)
-            howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position)+",1的效果很差");
-          else
-            howlHintView.setText("啸叫抑制已打开,级别是" + Integer.toString(position));
-        }
-        saveConfig();
-      }
-
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-        // 当没有选择任何项时调用
-      }
-    });
-
-    howlSpinner.setEnabled(false);
-    howlSpinner.setSelection(0);
-    IsHowlOpened=false;
-    howlSpinner.setEnabled(false);
-    howlButton.setText("开启啸叫抑制");
+    howlButton.setText("设置啸叫抑制级别");
+    echoButton.setText("设置回声消除级别");
 
     saveConfig();
     requestPermissions();
@@ -300,6 +307,7 @@ public class ConnectActivity extends Activity {
 
     IniHandler.setValue("log_folder_path",log_folder_path);
     IniHandler.setValue("suppress_level",String.valueOf(suppress_level));
+    IniHandler.setValue("echo_level",String.valueOf(echo_level));
     IniHandler.setValue("target_level_dbfs",String.valueOf(target_level_dbfs));
     IniHandler.setValue("compression_gain_db",String.valueOf(compression_gain_db));
     IniHandler.setValue("enable_limiter",String.valueOf(enable_limiter));
@@ -326,6 +334,45 @@ public class ConnectActivity extends Activity {
     return true;
   }
 
+  private void onNumberHowlInputChanged(String inputText) {
+    if (inputText.isEmpty()) {
+      // 输入为空时的处理
+      //Log.d("Input", "输入为空");
+      return;
+    }
+
+    try {
+      float number = Float.parseFloat(inputText);
+      suppress_level=number;
+      if(suppress_level>100)
+        suppress_level=100;
+      if(suppress_level<0)
+        suppress_level=0;
+      howlHintView.setText("啸叫抑制的级别已设置为"+Integer.toString((int)suppress_level));
+      saveConfig();
+    } catch (NumberFormatException e) {
+    }
+  }
+
+  private void onNumberEchoInputChanged(String inputText) {
+    if (inputText.isEmpty()) {
+      // 输入为空时的处理
+      //Log.d("Input", "输入为空");
+      return;
+    }
+
+    try {
+      float number = Float.parseFloat(inputText);
+      echo_level=number;
+      if(echo_level>100)
+        echo_level=100;
+      if(echo_level<0)
+        echo_level=0;
+      howlHintView.setText("回声消除的级别已设置为"+Integer.toString((int)echo_level));
+      saveConfig();
+    } catch (NumberFormatException e) {
+    }
+  }
   private void onNumberTargetInputChanged(String inputText) {
     if (inputText.isEmpty()) {
       // 输入为空时的处理
@@ -917,25 +964,19 @@ public class ConnectActivity extends Activity {
   private final OnClickListener howlListener = new OnClickListener() {
     @Override
     public void onClick(View view) {
-      if(IsHowlOpened)
-      {
-        IsHowlOpened=false;
-        howlSpinner.setEnabled(false);
-        howlButton.setText("打开啸叫抑制");
-        howlHintView.setText("啸叫抑制已经关闭");
-        suppress_level=0;
-      }
-      else
-      {
-        IsHowlOpened=true;
-        howlSpinner.setEnabled(true);
-        suppress_level=(float)howlSpinner.getSelectedItemPosition();
-        howlButton.setText("关闭啸叫抑制");
-        howlHintView.setText("啸叫抑制已经打开，请选择一个级别，不同级别会有不同效果");
-      }
+      howlHintView.setText("啸叫抑制的级别已设置为"+Integer.toString((int)suppress_level));
       saveConfig();
     }
   };
+
+  private final OnClickListener echoListener = new OnClickListener() {
+    @Override
+    public void onClick(View view) {
+      howlHintView.setText("回声消除的级别已设置为"+Integer.toString((int)echo_level));
+      saveConfig();
+    }
+  };
+
 
   private final OnClickListener receiverListener = new OnClickListener() {
     @Override

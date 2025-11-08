@@ -106,16 +106,16 @@
 			android:textSize="10sp"
 		    android:text="这个是loopback功能" />	
 	</LinearLayout>
-	
+
 	<TextView
-        android:id="@+id/howl_testview_status"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="8dp"
-		android:textSize="12sp"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="下面可以打开啸叫抑制功能"
-        android:gravity="center_vertical"/>
+		android:id="@+id/howl_testview_status"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:layout_marginTop="8dp"
+		android:gravity="center_vertical"
+		android:text="下面可以设置回音和啸叫抑制级别，级别范围0-100"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:textSize="12sp" />
 
 	<LinearLayout
         android:orientation="horizontal"
@@ -125,21 +125,60 @@
         android:layout_marginBottom="8dp">
 
 		<Button
-            android:id="@+id/howl_button"
-            android:layout_width="120dp"
-            android:layout_height="48dp"
-            android:background="@drawable/button_raised_selector"
-            android:elevation="4dp"
-            android:text="打开啸叫抑制"
-			android:textSize="8sp"
-            android:textColor="#8EC74B" />
-		<Spinner
-			android:id="@+id/howl_spinner"
+			android:id="@+id/howl_button"
+			android:layout_width="120dp"
+			android:layout_height="40dp"
+			android:background="@drawable/button_raised_selector"
+			android:elevation="4dp"
+			android:text="设置啸叫抑制级别"
+			android:textColor="#8EC74B"
+			android:textSize="8sp" />
+		<EditText
+			android:id="@+id/howl_level_edittext"
 			android:layout_width="150dp"
 			android:layout_height="wrap_content"
-			android:layout_margin="16dp" />
+			android:minHeight="48dp"
+			android:layout_weight="1"
+			android:hint="请输入0-100的数值"
+			android:imeOptions="actionDone"
+			android:inputType="number"
+			android:maxLines="1"
+			android:textSize="10sp"
+			android:textColorHint="#999999"
+			tools:ignore="LabelFor,Autofill" />
 	</LinearLayout>
 
+	<LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+		<Button
+			android:id="@+id/echo_button"
+			android:layout_width="120dp"
+			android:layout_height="40dp"
+			android:background="@drawable/button_raised_selector"
+			android:elevation="4dp"
+			android:text="设置回声消除级别"
+			android:textColor="#8EC74B"
+			android:textSize="8sp" />
+		<EditText
+			android:id="@+id/echo_level_edittext"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:minHeight="48dp"
+			android:layout_weight="1"
+			android:hint="请输入0-100的数值"
+			android:imeOptions="actionDone"
+			android:inputType="number"
+			android:maxLines="1"
+			android:textSize="10sp"
+			android:textColorHint="#999999"
+			tools:ignore="LabelFor,Autofill" />
+	</LinearLayout>
+	
 	<TextView
 	android:id="@+id/agc_testview_status"
 	android:layout_width="match_parent"
